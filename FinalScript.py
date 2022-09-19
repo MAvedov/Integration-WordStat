@@ -5,15 +5,15 @@ import requests
 import json
 import time
 import art
-
-def report(phras):
+###   Function ###
+def report(phras): # This function send requests, get report and delete him from server Yandex
     token = 'token'
     link = 'https://api.direct.yandex.ru/v4/json/'
     params_cr = {"method": "CreateNewWordstatReport", 
                 "param": {'Phrases': phras}, "format": 'json',
                 'token': token}
     
-    r = requests.post(link, json.dumps(params_cr, ensure_ascii = False).encode('utf8'))
+    r = requests.post(link, json.dumps(params_cr, ensure_ascii = False).encode('utf8')) # Requests on Create report
     report_num = r.json()
 
     key = 'data'
@@ -25,13 +25,13 @@ def report(phras):
 
     print('Rep num:', report_num)
 
-    time.sleep(60)
+    time.sleep(60) # Time needed for creating report
 
     params_list = {'method': 'GetWordstatReportList',
         'param': report_num, "format": 'json',
         'token': token}
 
-    list = requests.post(link, json.dumps(params_list, ensure_ascii = False).encode('utf8'))
+    list = requests.post(link, json.dumps(params_list, ensure_ascii = False).encode('utf8')) # Requests get report list, server has limit on 5 report in one time
     report_list = list.json()
 
     print(report_list)
@@ -40,7 +40,7 @@ def report(phras):
             'param': report_num, "format": 'json',
             'token': token}
     
-    get = requests.post(link, json.dumps(params_get, ensure_ascii = False).encode('utf8'))
+    get = requests.post(link, json.dumps(params_get, ensure_ascii = False).encode('utf8')) # Get report data
     report_data = get.json()
 
     data = report_data
@@ -51,12 +51,12 @@ def report(phras):
                 'param': report_num, 'format': 'json',
                 'token': token}
     
-    deleted = requests.post(link, json.dumps(params_del, ensure_ascii = False).encode('utf8'))
+    deleted = requests.post(link, json.dumps(params_del, ensure_ascii = False).encode('utf8')) # Del report from server
 
     respons = deleted.json()
 
-    key = 'data'
-    if key in respons:
+    key = 'data' 
+    if key in respons: # Check error
         if respons[key] == 1:
                 print(art.text2art('Report Deleted', chr_ignore = True))
     else:
@@ -64,11 +64,10 @@ def report(phras):
 
     return data
 
-def parsing(data,phras,claster):
+def parsing(data,phras,claster): # Function parsing data with phras and claster and make DF
     x = 0
     CURRENT_DATE = date.today()
     shows = []
-    key = 'data'
     for i in data['data']:
         if i['SearchedWith']:
             for j in i['SearchedWith']:
@@ -83,14 +82,14 @@ def parsing(data,phras,claster):
     shows = pd.DataFrame(shows,columns = ['Phrase','Shows','Cluster','Date'])
     return shows
     
-
+### Main part ###
 data = pd.read_excel('запросички.xlsx')
 
 i = 0
 PHRASES = []
 CLASTERS = []
 
-while i <=699: #699
+while i <=699: #699, Create 2 []  with clasters and phrases
     PHRAS = data.iloc[i][0]
     CLASTER = data.iloc[i][1]
     PHRASES.append(PHRAS)
@@ -100,13 +99,13 @@ while i <=699: #699
 print(PHRASES[:10])
 
 diap = []
-for value in range(10, 710, 10):
+for value in range(10, 710, 10): # Create [] with num from 10 to 710
     diap.append(value)
 
-df = pd.DataFrame(columns = ['Phrase','Shows','Cluster','Date'])
+df = pd.DataFrame(columns = ['Phrase','Shows','Cluster','Date']) # Create DataFrame which will updated parsing datas
 
 z = 0
-for i in diap:
+for i in diap: # Distribution 700 phrases on 70 part, get report data and parsing data
     if z == 0:
         phras = (PHRASES[:diap[z]])
         claster = (CLASTERS[:diap[z]])
@@ -133,9 +132,9 @@ for i in diap:
 df = pd.read_excel('Shows_info.xlsx')
 df = df.drop(df.columns[0], axis = 1)
 
-engine = create_engine('...')
+engine = create_engine('...') 
 
-df.to_sql('bi_WordStat_Shows', con = engine, if_exists = 'append', index = False)
+df.to_sql('bi_WordStat_Shows', con = engine, if_exists = 'append', index = False)# Update DataBase Table.
     
 print(art.text2art('DB Update', chr_ignore = True))
 
